@@ -1,0 +1,17 @@
+# Web Framework
+fastapi
+uvicorn
+
+# Database
+sqlalchemy[asyncio]
+aiosqlite
+
+# Git Operations
+GitPython
+
+# File I/O & Utils
+aiofiles
+python-multipart
+
+# Environment Variables
+python-dotenv
