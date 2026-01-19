@@ -2,23 +2,28 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
-from starlette.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.database.session import engine, Base
+from app.routers import note_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Starting lifespan")
+    # [Startup] 테이블 자동 생성
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+    # [Shutdown] 리소스 정리
+    await engine.dispose()
 
-    yield   # 서버가 작동하는 구간
-
-    print("Stopping lifespan")
 
 app = FastAPI(
-    title="Note Service",
-    description="Note Service",
-    version="1.0",
+    title="Note Management API",
     lifespan=lifespan
 )
 
+# CORS 설정
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -27,10 +32,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# app.include_router(None, prefix="/notes", tags=["Note"])
+# 라우터 등록
+app.include_router(note_router.router, prefix="/notes", tags=["Notes"])
 
-
-
-if __name__ == '__main__':
-    print("Starting app")
-    uvicorn.run("app.main:app", host="127.0.0.1", port=9900, reload=True)
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
